@@ -5,8 +5,9 @@ using UnityEngine.UI;
 using System;
 using TMPro;
 using System.Security.Cryptography;
+using UnityEngine.SceneManagement;
 
-public enum GameState { GS_PAUSEMENU, GS_GAME, GS_LEVELCOMPLETED, GS_GAME_OVER }
+public enum GameState { GS_PAUSEMENU, GS_GAME, GS_LEVELCOMPLETED, GS_GAME_OVER , GS_OPTIONS}
 
 public class GameManager : MonoBehaviour
 {
@@ -14,9 +15,16 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     public Canvas inGameCanvas;
     public TMP_Text scoreText;
+    public TMP_Text ScoreText;
+    public TMP_Text highScoreText;
     private int score = 0;
     public Image[] keysTab;
     private int keysFound = 0;
+    public Canvas pauseMenuCanvas;
+    public Canvas optionsCanvas;
+    public Canvas levelCompletedCanvas;
+    const string keyHighScore = "HighScoreLevel1";    
+    
 
     // Start is called before the first frame update
     void Start()
@@ -31,12 +39,16 @@ public class GameManager : MonoBehaviour
         {
             if (currentGameState == GameState.GS_PAUSEMENU)
             {
-                currentGameState = GameState.GS_GAME;
+                InGame();
+                Time.timeScale = 1f;
             }
             else if (currentGameState == GameState.GS_GAME)
             {
-                currentGameState = GameState.GS_PAUSEMENU;
+                PauseMenu();
+                Time.timeScale = 0;
+
             }
+
         }
     }
     public void AddPoints(int points)
@@ -60,11 +72,14 @@ public class GameManager : MonoBehaviour
         }
         keysFound++;     
     }
-    public void Meta()
+    public void Meta( int lives)
     {
         if (keysFound == keysTab.Length)
-        {
+        {         
             Debug.Log("Zwyciêstwo. Znalaz³eœ wszystkie klucze!");
+            AddPoints(100*lives);
+            GameManager.instance.LevelCompleted();
+                
         }
         else
         {
@@ -75,18 +90,77 @@ public class GameManager : MonoBehaviour
     {
         instance = this;
         scoreText.text = score.ToString();
+        InGame();
+        if (!PlayerPrefs.HasKey(keyHighScore))
+        {
+            PlayerPrefs.SetInt(keyHighScore, 0);
+        }
     }
     void SetGameState(GameState newGameState)
     {
         currentGameState = newGameState;
+        pauseMenuCanvas.enabled = (currentGameState == GameState.GS_PAUSEMENU);
+        optionsCanvas.enabled = (currentGameState == GameState.GS_OPTIONS);
+        levelCompletedCanvas.enabled = (currentGameState == GameState.GS_LEVELCOMPLETED);
+        
         if(currentGameState == GameState.GS_GAME)
         {
             inGameCanvas.enabled = true;
         }
+        else if (currentGameState == GameState.GS_LEVELCOMPLETED)
+        {
+            Scene currentScene = SceneManager.GetActiveScene();
+            if(currentScene.name == "Level1")
+            {
+                int highScore = PlayerPrefs.GetInt(keyHighScore);
+                if(highScore < score)
+                {
+                    highScore = score;
+                    PlayerPrefs.SetInt(keyHighScore, highScore);
+                }
+
+                highScoreText.text ="Highscore = " + highScore.ToString();
+                ScoreText.text ="Your score = " + score.ToString();
+            }
+        }
+    }
+    public void OnResumeButtonClicked() {
+        InGame();
+        Time.timeScale = 1f;
+    }
+    public void OnOptionsClicked()
+    {
+        Time.timeScale = 0;
+
+        this.Options();
+    }
+    public void OnRestartButtonClicked()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+    public void OnIncreaseClicked()
+    {
+        QualitySettings.IncreaseLevel();
+    }
+    public void OnDecreaseClicked()
+    {
+        QualitySettings.DecreaseLevel();
+    }
+    public void SetVolume(float vol)
+    {
+        AudioListener.volume = vol;
+    }
+    public void OnRestartToMainMenuButtonClicked()
+    {
+        SceneManager.LoadScene("MainMenu");
     }
     public void PauseMenu()
     {
         SetGameState(GameState.GS_PAUSEMENU);
+    }
+    public void Options()
+    {
+        SetGameState(GameState.GS_OPTIONS);
     }
     public void InGame()
     {

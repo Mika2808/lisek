@@ -8,9 +8,9 @@ TagManager:
   - Enemy
   - Key
   - Heart
-  - Meta
   - FallLevel
   - MovingPlatform
+  - Exit
   layers:
   - Default
   - TransparentFX

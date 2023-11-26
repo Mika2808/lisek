@@ -9,6 +9,11 @@ public class PlayerController : MonoBehaviour
 {
     [Range(0.01f, 20.0f)][SerializeField] private float moveSpeed = 0.1f; // moving speed of the player
     [Range(0.01f, 20.0f)][SerializeField] private float jumpForce = 6.0f; // jumping force of the player       
+    [SerializeField] private AudioClip bonusSound;
+    [SerializeField] private AudioClip gemSound;
+    [SerializeField] private AudioClip eagleSound;
+    [SerializeField] private AudioClip metaSound;
+    [SerializeField] private AudioClip deathSound;
 
     private Rigidbody2D rigidBody;
     public LayerMask groundLayer;
@@ -19,6 +24,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 theScale;
     private int lives = 3;
     private Vector2 startPosition;
+    private AudioSource source;
 
     // Start is called before the first frame update
     void Start()
@@ -69,6 +75,7 @@ public class PlayerController : MonoBehaviour
     {
         rigidBody = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        source = GetComponent<AudioSource>();
         theScale = transform.localScale;
         startPosition = transform.position;
     }
@@ -114,6 +121,7 @@ public class PlayerController : MonoBehaviour
         {
             other.gameObject.SetActive(false);
             GameManager.instance.AddPoints(50);
+            source.PlayOneShot(bonusSound, AudioListener.volume);
             //Debug.Log("Score: " + score);            
         }
         else if (other.CompareTag("Enemy"))
@@ -121,10 +129,11 @@ public class PlayerController : MonoBehaviour
             if(transform.position.y > other.transform.position.y)
             {                
                 GameManager.instance.AddPoints(100);
-                //Debug.Log("Zabito or³a!! Score: " + score);                
+                source.PlayOneShot(eagleSound, AudioListener.volume); // roboczo
+                //Debug.Log("Zabito or³a!! Score: ");                
             }
             else
-            {
+            {               
                 Death();
             }                       
         }
@@ -133,7 +142,8 @@ public class PlayerController : MonoBehaviour
             ////robocze
             //Debug.Log(other.ToString());            
             GameManager.instance.AddKeys(other.ToString());            
-            other.gameObject.SetActive(false);            
+            other.gameObject.SetActive(false);
+            source.PlayOneShot(gemSound, AudioListener.volume);
         }
         else if (other.CompareTag("Heart"))
         {
@@ -141,9 +151,10 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Znalaz³eœ dodatkowe ¿ycie! Liczba ¿yæ: " + lives);
             other.gameObject.SetActive(false);
         }
-        else if (other.CompareTag("Meta"))
+        else if (other.CompareTag("Exit"))
         {
-            GameManager.instance.Meta();            
+            GameManager.instance.Meta(lives);
+            source.PlayOneShot(metaSound, AudioListener.volume);
         }
         else if (other.CompareTag("FallLevel"))
         {
@@ -162,7 +173,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator KillOnAnimationEnd()
     {
         rigidBody.simulated = false;
-
+        source.PlayOneShot(deathSound, AudioListener.volume);
         yield return new WaitForSeconds(1);        
         animator.SetBool("isDead", false);
         transform.position = startPosition;

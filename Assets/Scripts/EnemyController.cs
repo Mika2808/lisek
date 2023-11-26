@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
+using static Unity.VisualScripting.Member;
 
 public class EnemyController : MonoBehaviour
 {
@@ -81,7 +82,7 @@ public class EnemyController : MonoBehaviour
         {
             if (transform.position.y < other.transform.position.y)
             {
-                animator.SetBool("isDead",true);
+                animator.SetBool("isDead",true);            
                 StartCoroutine(KillOnAnimationEnd());                               
             }
         }
